@@ -1,11 +1,14 @@
 version: "3.7"
 services:
   db:
+    hostname: db
     image: lnlscon/mailpy-db:v1.0
     ports:
       - 27017:27017
     build:
       context: ./db
+    volumes:
+      - mongo:/data/db
 
   mail:
     image: lnlscon/mailpy:v2.0
@@ -26,12 +29,12 @@ services:
   api:
     image: node:12.19.0-stretch
     working_dir: /app
-    command: bash -c 'set -x; [[ ! -d node_modules ]] && npm install; npm run start;'
+    command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; npm run start;'
     stdin_open: true # without this node doesn't start
     environment:
-      API_URI: "http://localhost:1337"
-      MONGODB_URI: mongodb://localhost:27017/mailpy-db
+      MONGODB_URI: mongodb://db:27017/mailpy-db
       NODE_ENV: development
+      FORCE_INSTALL: "false"
     volumes:
       - "./api:/app"
     ports:
@@ -40,16 +43,19 @@ services:
   frontend:
     image: node:12.19.0-stretch
     working_dir: /app
-    command: bash -c 'set -x; [[ ! -d node_modules ]] && npm install; npm run start;'
+    command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; npm run start;'
     stdin_open: true # without this node doesn't start
     environment:
-      API_URI: "http://localhost:1337"
+      API_URI: "https://localhost:1337"
       NODE_ENV: development
+      FORCE_INSTALL: "false"
     volumes:
       - "./frontend:/app"
     ports:
       - 3006:3006
 
+volumes:
+  mongo:
 secrets:
   CONS2_SMS_PASSWD:
     external: true
