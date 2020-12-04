@@ -5,13 +5,13 @@ services:
     ports:
       - 27017:27017
     build:
-      context: ./mailpy-db
+      context: ./db
 
   mail:
     image: lnlscon/mailpy:v2.0
     build:
-      context: ./mailpy
-    network_mode: host
+      context: ./mail
+    network_mode: host # Required for broadcast forwarding
     secrets:
       - CONS2_SMS_PASSWD
     volumes:
@@ -33,7 +33,7 @@ services:
       MONGODB_URI: mongodb://localhost:27017/mailpy-db
       NODE_ENV: development
     volumes:
-      - "./mailpy-api:/app"
+      - "./api:/app"
     ports:
       - 1337:1337
 
@@ -46,7 +46,7 @@ services:
       API_URI: "http://localhost:1337"
       NODE_ENV: development
     volumes:
-      - "./mailpy-frontend:/app"
+      - "./frontend:/app"
     ports:
       - 3006:3006
 
