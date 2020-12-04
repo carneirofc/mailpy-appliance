@@ -29,12 +29,13 @@ services:
   api:
     image: node:12.19.0-stretch
     working_dir: /app
-    command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; npm run start;'
+    command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; [[ "$DEV"=true ]] && npm run dev || npm run start;'
     stdin_open: true # without this node doesn't start
     environment:
       MONGODB_URI: mongodb://db:27017/mailpy-db
       NODE_ENV: development
       FORCE_INSTALL: "false"
+      DEV: "true"
     volumes:
       - "./api:/app"
     ports:
