@@ -1,0 +1,9 @@
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/carneirofc/mailpy-frontend
+[submodule "api"]
+	path = api
+	url = https://github.com/carneirofc/mailpy-api
+[submodule "mail"]
+	path = mail
+	url = https://github.com/carneirofc/mailpy

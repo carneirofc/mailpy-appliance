@@ -1,0 +1,55 @@
+version: "3.7"
+services:
+  db:
+    image: lnlscon/mailpy-db:v1.0
+    ports:
+      - 27017:27017
+    build:
+      context: ./mailpy-db
+
+  mail:
+    image: lnlscon/mailpy:v2.0
+    build:
+      context: ./mailpy
+    network_mode: host
+    secrets:
+      - CONS2_SMS_PASSWD
+    volumes:
+      - ./SMS_LOGIN:/run/secrets/SMS_LOGIN
+      - ./SMS_PASSWORD:/run/secrets/SMS_PASSWORD
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  api:
+    image: node:12.19.0-stretch
+    working_dir: /app
+    command: bash -c 'set -x; [[ ! -d node_modules ]] && npm install; npm run start;'
+    stdin_open: true # without this node doesn't start
+    environment:
+      API_URI: "http://localhost:1337"
+      MONGODB_URI: mongodb://localhost:27017/mailpy-db
+      NODE_ENV: development
+    volumes:
+      - "./mailpy-api:/app"
+    ports:
+      - 1337:1337
+
+  frontend:
+    image: node:12.19.0-stretch
+    working_dir: /app
+    command: bash -c 'set -x; [[ ! -d node_modules ]] && npm install; npm run start;'
+    stdin_open: true # without this node doesn't start
+    environment:
+      API_URI: "http://localhost:1337"
+      NODE_ENV: development
+    volumes:
+      - "./mailpy-frontend:/app"
+    ports:
+      - 3006:3006
+
+secrets:
+  CONS2_SMS_PASSWD:
+    external: true
