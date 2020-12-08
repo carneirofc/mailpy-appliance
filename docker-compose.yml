@@ -31,11 +31,13 @@ services:
     working_dir: /app
     command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; [[ "$DEV"=true ]] && npm run dev || npm run start;'
     stdin_open: true # without this node doesn't start
+    user: "${UID}:${GID}"
     environment:
       MONGODB_URI: mongodb://db:27017/mailpy-db
       NODE_ENV: development
       FORCE_INSTALL: "false"
       DEV: "true"
+      API_SECRET: ""
     volumes:
       - "./api:/app"
     ports:
@@ -46,6 +48,7 @@ services:
     working_dir: /app
     command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; npm run start;'
     stdin_open: true # without this node doesn't start
+    user: "${UID}:${GID}"
     environment:
       API_URI: "https://localhost:1337"
       NODE_ENV: development
