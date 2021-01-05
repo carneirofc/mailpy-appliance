@@ -16,10 +16,11 @@ services:
       context: ./mail
     network_mode: host # Required for broadcast forwarding
     secrets:
-      - CONS2_SMS_PASSWD
-    volumes:
-      - ./SMS_LOGIN:/run/secrets/SMS_LOGIN
-      - ./SMS_PASSWORD:/run/secrets/SMS_PASSWORD
+      - ALERT_MAIL_LOGIN
+      - ALERT_MAIL_PASSWORD
+    volumes: # Use volumes so we can develop without docker swarm
+      - ./ALERT_MAIL_LOGIN:/run/secrets/ALERT_MAIL_LOGIN
+      - ./ALERT_MAIL_PASSWORD:/run/secrets/ALERT_MAIL_PASSWORD
     logging:
       driver: "json-file"
       options:
@@ -60,6 +61,9 @@ services:
 
 volumes:
   mongo:
+
 secrets:
-  CONS2_SMS_PASSWD:
+  ALERT_MAIL_PASSWORD:
+    external: true
+  ALERT_MAIL_LOGIN:
     external: true
