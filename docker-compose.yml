@@ -9,6 +9,8 @@ services:
       context: ./db
     volumes:
       - mongo:/data/db
+    networks:
+      - mailpylocal
 
   mail:
     image: lnlscon/mailpy:v2.0
@@ -18,14 +20,20 @@ services:
     secrets:
       - ALERT_MAIL_LOGIN
       - ALERT_MAIL_PASSWORD
-    volumes: # Use volumes so we can develop without docker swarm
-      - ./ALERT_MAIL_LOGIN:/run/secrets/ALERT_MAIL_LOGIN
-      - ./ALERT_MAIL_PASSWORD:/run/secrets/ALERT_MAIL_PASSWORD
+    environment:
+      # Set username and password if needed
+      # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
+      MONGODB_URI: mongodb://db:27017/mailpy-db
+#   volumes: # Use volumes so we can develop without docker swarm
+#     - ./ALERT_MAIL_LOGIN:/run/secrets/ALERT_MAIL_LOGIN
+#     - ./ALERT_MAIL_PASSWORD:/run/secrets/ALERT_MAIL_PASSWORD
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "10"
+    networks:
+      - hostnet
 
   api:
     image: node:12.19.0-stretch
@@ -34,6 +42,8 @@ services:
     stdin_open: true # without this node doesn't start
     user: "${UID}:${GID}"
     environment:
+      # Set username and password if needed
+      # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
       MONGODB_URI: mongodb://db:27017/mailpy-db
       NODE_ENV: development
       FORCE_INSTALL: "false"
@@ -43,6 +53,8 @@ services:
       - "./api:/app"
     ports:
       - 1337:1337
+    networks:
+      - mailpylocal
 
   frontend:
     image: node:12.19.0-stretch
@@ -58,6 +70,14 @@ services:
       - "./frontend:/app"
     ports:
       - 3006:3006
+    networks:
+      - mailpylocal
+
+networks:
+  hostnet:
+    external:
+      name: "host"
+  mailpylocal:
 
 volumes:
   mongo:
