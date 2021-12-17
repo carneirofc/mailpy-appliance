@@ -13,18 +13,32 @@ services:
         protocol: tcp
         mode: host
     volumes:
-      - /home/carneirofc/mailpy-appliance/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /home/carneirofc/mailpy-appliance/haproxy/keys/haproxy.pem:/etc/ssl/haproxy.pem
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+      - ./haproxy/keys/haproxy.pem:/etc/ssl/haproxy.pem
 
   db:
     hostname: db
-    image: lnlscon/mailpy-db:v1.0
+    image: lnlscon/mailpy-db:v1.2
+    environment:
+      MONGO_INITDB_DATABASE: mailpy
     ports:
       - 27017:27017
     build:
       context: ./db
-    volumes:
-      - mongo:/data/db
+#   volumes:
+#     - mongo:/data/db
+    networks:
+      - mailpylocal
+
+  db-test:
+    hostname: db-test
+    image: lnlscon/mailpy-db:v1.2
+    environment:
+      MONGO_INITDB_DATABASE: mailpy-test
+    ports:
+      - 27018:27017
+    build:
+      context: ./db
     networks:
       - mailpylocal
 
@@ -38,33 +52,33 @@ services:
     environment:
       # Set username and password if needed
       # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
-      MONGODB_URI: mongodb://db:27017/mailpy-db
+      MONGODB_URI: mongodb://db:27017/mailpy
 #   volumes: # Use volumes to develop without docker swarm
 #     - ./ALERT_MAIL_LOGIN:/run/secrets/ALERT_MAIL_LOGIN
 #     - ./ALERT_MAIL_PASSWORD:/run/secrets/ALERT_MAIL_PASSWORD
     networks:
       - hostnet
 
-# api-dev:
-#   image: node:12.19.0-stretch
-#   working_dir: /app
-#   command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; [[ "$DEV"=true ]] && npm run dev || npm run start;'
-#   stdin_open: true # without this node doesn't start
-#   user: "${UID}:${GID}"
-#   environment:
-#     # Set username and password if needed
-#     # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
-#     MONGODB_URI: mongodb://db:27017/mailpy-db
-#     NODE_ENV: development
-#     FORCE_INSTALL: "false"
-#     DEV: "true"
-#     API_SECRET: ""
-#   volumes:
-#     - "./api:/app"
-#   ports:
-#     - 1337:1337
-#   networks:
-#     - mailpylocal
+  api-dev:
+    image: node:12.19.0-stretch
+    working_dir: /app
+    command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; [[ "$DEV"=true ]] && npm run dev || npm run start;'
+    stdin_open: true # without this node doesn't start
+    user: "1000:1000"
+    environment:
+      # Set username and password if needed
+      # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
+      MONGODB_URI: mongodb://192.168.50.102:27017/mailpy
+      NODE_ENV: development
+      FORCE_INSTALL: "false"
+      DEV: "true"
+      API_SECRET: ""
+    volumes:
+      - "./api:/app"
+    ports:
+      - 1337:1337
+    networks:
+      - mailpylocal
 
   api:
     image: lnlscon/mailpyapi:v1.0
@@ -72,7 +86,7 @@ services:
       context: ./api
     environment:
       # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
-      MONGODB_URI: mongodb://192.168.50.102:27017/mailpy-db
+      MONGODB_URI: mongodb://192.168.50.102:27017/mailpy
       NODE_ENV: production
     ports:
       - 1337:1337
@@ -89,22 +103,21 @@ services:
     networks:
       - mailpylocal
 
-# frontend-dev:
-#   image: node:12.19.0-stretch
-#   working_dir: /app
-#   command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; npm run start;'
-#   stdin_open: true # without this node doesn't start
-#   user: "${UID}:${GID}"
-#   environment:
-#     API_URI: "https://localhost:1337"
-#     NODE_ENV: development
-#     FORCE_INSTALL: "false"
-#   volumes:
-#     - "./frontend:/app"
-#   ports:
-#     - 3006:3006
-#   networks:
-#     - mailpylocal
+  frontend-dev:
+    image: node:12.19.0-stretch
+    working_dir: /app
+    command: bash -c 'set -x; [[ ! -d node_modules || "$FORCE_INSTALL"=true ]] && npm install; npm run start;'
+    stdin_open: true # without this node doesn't start
+    user: "1000:1000"
+    environment:
+      NODE_ENV: development
+      FORCE_INSTALL: "false"
+    volumes:
+      - "./frontend:/app"
+    ports:
+      - 3006:3006
+    networks:
+      - mailpylocal
 
 networks:
   hostnet:
